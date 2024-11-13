@@ -100,7 +100,11 @@ api.add_resource(TraderByID, '/traders/<int:id>')
 
 class AllPortfolios(Resource):
     def get(self):
-        portfolios = [portfolio.to_dict(only=("id", "name")) for portfolio in Portfolio.query.all()]
+        # Include "total_value" in the dictionary for each portfolio
+        portfolios = [
+            portfolio.to_dict(only=("id", "name", "total_value"))
+            for portfolio in Portfolio.query.all()
+        ]
         return make_response(jsonify(portfolios), 200)
 
     def post(self):

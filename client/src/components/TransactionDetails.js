@@ -12,28 +12,49 @@ function TransactionDetail() {
             .catch((error) => console.error("Error fetching transaction:", error));
     }, [id]);
 
+    const handleDelete = () => {
+        fetch(`/transactions/${id}`, {
+            method: "DELETE",
+        })
+            .then((response) => {
+                if (response.ok) {
+                    alert("Transaction deleted successfully.");
+                    setTransaction(null);
+                } else {
+                    alert("Failed to delete transaction.");
+                }
+            })
+            .catch((error) => console.error("Error deleting transaction:", error));
+    };
+
     if (!transaction) {
         return <p>Loading...</p>;
     }
 
     return (
-        <div>
+        <div className="transaction-details">
             <h2>Transaction Details</h2>
-            <p>Stock Code: {transaction.stock_code}</p>
-            <p>Quantity: {transaction.quantity}</p>
-            <p>Stock Price: ${transaction.stock_price}</p>
-            <p>Total Amount: ${transaction.total_amount}</p>
-            <p>Date: {new Date(transaction.date).toLocaleDateString()}</p>
+            <p className="transaction-info">Stock Code: {transaction.stock_code}</p>
+            <p className="transaction-info">Quantity: {transaction.quantity} shares</p>
+            <p className="transaction-info">Price: ${transaction.stock_price}</p>
+            <p className="transaction-info">Total Value: ${(transaction.quantity * transaction.stock_price).toFixed(2)}</p>
+            <p className="transaction-info">Date: {new Date(transaction.date).toLocaleDateString()}</p>
 
             <h3>Associated Trader</h3>
             <p>
-                <Link to={`/trader/${transaction.trader.id}`}>{transaction.trader.name}</Link>
+                <Link to={`/trader/${transaction.trader.id}`}>
+                    {transaction.trader.name}
+                </Link>
             </p>
 
             <h3>Associated Portfolio</h3>
             <p>
-                <Link to={`/portfolio/${transaction.portfolio.id}`}>{transaction.portfolio.name}</Link>
+                <Link to={`/portfolio/${transaction.portfolio.id}`}>
+                    {transaction.portfolio.name}
+                </Link>
             </p>
+
+            <button className="delete-button" onClick={handleDelete}>Delete Transaction</button>
         </div>
     );
 }

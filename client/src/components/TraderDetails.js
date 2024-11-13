@@ -12,14 +12,29 @@ function TraderDetail() {
             .catch((error) => console.error("Error fetching trader:", error));
     }, [id]);
 
+    const handleDelete = () => {
+        fetch(`/traders/${id}`, {
+            method: "DELETE",
+        })
+            .then((response) => {
+                if (response.ok) {
+                    alert("Trader deleted successfully.");
+                    setTrader(null); // Optionally redirect or clear state
+                } else {
+                    alert("Failed to delete trader.");
+                }
+            })
+            .catch((error) => console.error("Error deleting trader:", error));
+    };
+
     if (!trader) {
         return <p>Loading...</p>;
     }
 
     return (
-        <div>
+        <div className="trader-details">
             <h2>{trader.name}</h2>
-            <img src={trader.photo} alt={`${trader.name}'s photo`} />
+            <img src={trader.photo} alt={`${trader.name}'s photo`} className="trader-photo-large" />
             
             <h3>Portfolios</h3>
             <ul>
@@ -34,12 +49,12 @@ function TraderDetail() {
             <ul>
                 {trader.transactions.map((transaction) => (
                     <li key={transaction.id}>
-                        {transaction.stock_code} - {transaction.quantity} shares - ${transaction.stock_price}
-                        <br />
-                        Date: {new Date(transaction.date).toLocaleDateString()}
-                    </li>
+                    <strong> {transaction.stock_code} </strong> - {transaction.quantity} shares - ${transaction.stock_price} - <strong>Date:</strong> {new Date(transaction.date).toLocaleDateString()} - <strong>Value:</strong>  {transaction.quantity * transaction.stock_price}
+                </li>
                 ))}
             </ul>
+
+            <button onClick={handleDelete} className="delete-button">Delete Trader</button>
         </div>
     );
 }
