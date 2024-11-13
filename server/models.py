@@ -1,7 +1,7 @@
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from datetime import datetime
-from config import db
+from app import db
 
 class Trader(db.Model, SerializerMixin):
     __tablename__ = "traders"
@@ -9,13 +9,7 @@ class Trader(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
     photo = db.Column(db.String, nullable=True)
-
-    portfolios = db.relationship(
-        "Portfolio",
-        secondary="trader_portfolio",
-        back_populates="traders"
-    )
-
+    
     transactions = db.relationship("Transaction", back_populates="trader", cascade="all")
 
     @validates("name")
@@ -23,17 +17,12 @@ class Trader(db.Model, SerializerMixin):
         if not value or len(value) < 3:
             raise ValueError("Trader name must be at least 3 characters long.")
         return value
+
 class Portfolio(db.Model, SerializerMixin):
     __tablename__ = "portfolios"
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
-    
-    traders = db.relationship(
-        "Trader",
-        secondary="trader_portfolio",
-        back_populates="portfolios"
-    )
     
     transactions = db.relationship("Transaction", back_populates="portfolio", cascade="all")
 
@@ -51,7 +40,7 @@ class Transaction(db.Model, SerializerMixin):
     __tablename__ = "transactions"
     
     id = db.Column(db.Integer, primary_key=True)
-    stock_index = db.Column(db.String, nullable=False)
+    stock_code = db.Column(db.String, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     stock_price = db.Column(db.Float, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -62,10 +51,10 @@ class Transaction(db.Model, SerializerMixin):
     trader = db.relationship("Trader", back_populates="transactions")
     portfolio = db.relationship("Portfolio", back_populates="transactions")
 
-    @validates("stock_index")
-    def validate_stock_index(self, key, value):
+    @validates("stock_code")
+    def validate_stock_code(self, key, value):
         if not isinstance(value, str):
-            raise ValueError("Stock index must be a string.")
+            raise ValueError("Stock code must be a string.")
         return value
 
     @validates("quantity", "stock_price")
@@ -77,3 +66,4 @@ class Transaction(db.Model, SerializerMixin):
     @property
     def total_amount(self):
         return self.quantity * self.stock_price
+
