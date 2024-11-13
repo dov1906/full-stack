@@ -1,7 +1,12 @@
 import React from "react";
 
 function Home() {
-    return <h1>Welcome to the Finance Management App</h1>;
+    return (
+        <div>
+            <h1>Welcome to the Finance Management App</h1>
+            <p>Hello World</p>
+        </div>
+    );
 }
 
 export default Home;
