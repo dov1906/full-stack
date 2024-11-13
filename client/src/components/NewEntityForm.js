@@ -23,7 +23,7 @@ function NewEntityForm() {
             stock_code: "",
             quantity: "",
             stock_price: "",
-            associatedTrader: "",
+            associatedTraders: [], // Updated to be an array for multiple traders
             associatedPortfolio: "",
         },
         onSubmit: (values) => {
@@ -34,7 +34,7 @@ function NewEntityForm() {
                 stock_code: values.stock_code,
                 quantity: values.quantity,
                 stock_price: values.stock_price,
-                trader_id: values.associatedTrader,
+                trader_ids: values.associatedTraders, // Updated to send an array of trader IDs
                 portfolio_id: values.associatedPortfolio,
             };
 
@@ -138,13 +138,18 @@ function NewEntityForm() {
 
                 {(entityType === "portfolio" || entityType === "transaction") && (
                     <label>
-                        Select Associated Trader:
+                        Select Associated Traders:
                         <select
-                            name="associatedTrader"
-                            onChange={formik.handleChange}
-                            value={formik.values.associatedTrader}
+                            name="associatedTraders"
+                            onChange={(e) =>
+                                formik.setFieldValue(
+                                    "associatedTraders",
+                                    Array.from(e.target.selectedOptions, option => option.value)
+                                )
+                            }
+                            multiple // Allows multiple selection
+                            value={formik.values.associatedTraders}
                         >
-                            <option value="">-- Select Trader --</option>
                             {traders.map((trader) => (
                                 <option key={trader.id} value={trader.id}>
                                     {trader.name}
