@@ -1,15 +1,9 @@
 from flask import Flask, request, make_response, jsonify
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from sqlalchemy import MetaData
 
-# Database setup
-metadata = MetaData(naming_convention={
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-})
-db = SQLAlchemy(metadata=metadata)
+from models import db, Trader, Portfolio, Transaction
 
 # Initialize the app and its configuration
 app = Flask(__name__)
@@ -24,7 +18,7 @@ api = Api(app)
 CORS(app)
 
 # Import models after `db` initialization to avoid circular imports
-from models import Trader, Portfolio, Transaction
+
 
 @app.route("/")
 def index():
@@ -38,20 +32,31 @@ class AllTraders(Resource):
 
     def post(self):
         data = request.get_json()
-        try:
-            new_trader = Trader(
-                name=data.get("name"),
-                photo=data.get("photo")
-            )
-            db.session.add(new_trader)
-            db.session.commit()
-            return make_response(new_trader.to_dict(only=("id", "name", "photo")), 201)
-        except Exception as e:
-            return make_response({"error": str(e)}, 400)
+        new_trader = Trader(
+            name=data["name"],
+            photo=data.get("photo")
+        )
+        db.session.add(new_trader)
+        db.session.commit()
+        return make_response(new_trader.to_dict(), 201)
 
 api.add_resource(AllTraders, "/traders")
 
 class TraderByID(Resource):
+    def get(self, id):
+        trader = db.session.get(Trader, id)
+        if trader:
+            body = trader.to_dict(only=("id", "name", "photo"))
+            body["portfolios"] = [
+                portfolio.to_dict(only=("id", "name")) for portfolio in {transaction.portfolio for transaction in trader.transactions}
+            ]
+            body["transactions"] = [
+                transaction.to_dict(only=("id", "stock_code", "quantity", "stock_price", "date", "total_amount")) for transaction in trader.transactions
+            ]
+            return make_response(jsonify(body), 200)
+        else:
+            return make_response({"error": f"Trader {id} not found."}, 404)
+        
     def patch(self, id):
         trader = db.session.get(Trader, id)
 
@@ -100,36 +105,42 @@ class AllPortfolios(Resource):
 
     def post(self):
         data = request.get_json()
-        try:
-            new_portfolio = Portfolio(name=data.get("name"))
-            db.session.add(new_portfolio)
-            db.session.commit()
-            return make_response(new_portfolio.to_dict(only=("id", "name")), 201)
-        except Exception as e:
-            return make_response({"error": str(e)}, 400)
+        new_portfolio = Portfolio(
+            name=data["name"]
+        )
+        db.session.add(new_portfolio)
+        db.session.commit()
+        return make_response(new_portfolio.to_dict(), 201)
 
 api.add_resource(AllPortfolios, "/portfolios")
 
 class PortfolioByID(Resource):
     def get(self, id):
-        portfolio = Portfolio.query.get(id)
+        portfolio = db.session.get(Portfolio, id)
         if portfolio:
-            body = portfolio.to_dict()
-            body["traders"] = [trader.to_dict(only=("id", "name")) for trader in portfolio.traders]
-            body["transactions"] = [transaction.to_dict() for transaction in portfolio.transactions]
+            body = portfolio.to_dict(only=("id", "name"))
+            # Adding associated traders
+            body["traders"] = [
+                trader.to_dict(only=("id", "name", "photo")) for trader in {transaction.trader for transaction in portfolio.transactions}
+            ]
+            # Adding associated transactions and total value
+            body["transactions"] = [
+                transaction.to_dict(only=("id", "stock_code", "quantity", "stock_price", "date")) for transaction in portfolio.transactions
+            ]
             body["total_value"] = portfolio.total_value
             return make_response(jsonify(body), 200)
         else:
-            return make_response({"error": f"Portfolio with id {id} not found."}, 404)
+            return make_response({"error": f"Portfolio {id} not found."}, 404)
+
 
     def delete(self, id):
-        portfolio = Portfolio.query.get(id)
+        portfolio = db.session.get(Portfolio, id)
         if portfolio:
             db.session.delete(portfolio)
             db.session.commit()
             return make_response({}, 204)
         else:
-            return make_response({"error": f"Portfolio with id {id} not found."}, 404)
+            return make_response({"error": f"Portfolio {id} not found."}, 404)
 
 api.add_resource(PortfolioByID, "/portfolios/<int:id>")
 
@@ -159,6 +170,28 @@ class AllTransactions(Resource):
             return make_response({"error": str(e)}, 400)
 
 api.add_resource(AllTransactions, "/transactions")
+
+class TransactionByID(Resource):
+    def get(self, id):
+        transaction = db.session.get(Transaction, id)
+        if transaction:
+            body = transaction.to_dict(only=("id", "stock_code", "quantity", "stock_price", "date", "total_amount"))
+            body["trader"] = transaction.trader.to_dict(only=("id", "name", "photo"))
+            body["portfolio"] = transaction.portfolio.to_dict(only=("id", "name"))
+            return make_response(jsonify(body), 200)
+        else:
+            return make_response({"error": f"Transaction {id} not found."}, 404)
+        
+    def delete(self, id):
+        transaction = db.session.get(Transaction, id)
+        if transaction:
+            db.session.delete(transaction)
+            db.session.commit()
+            return make_response({}, 204)
+        else:
+            return make_response({"error": "Transaction not found."}, 404)
+        
+api.add_resource(TransactionByID, "/transactions/<int:id>")
 
 
 if __name__ == "__main__":

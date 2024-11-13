@@ -14,7 +14,7 @@ with app.app_context():
     # Create a sample Trader
     trader1 = Trader(
         name="John Doe",
-        photo="./images/john_doe.jpg"
+        photo="https://www.investopedia.com/thmb/tZ1iUtk_BlUqKiufI7qmFpu_m-E=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/StockTraderDefinitionTypesVs.StockBroker-2f2fe4ba7f14437ab75c6ac462bbeb85.jpg"
     )
 
     # Create a sample Portfolio

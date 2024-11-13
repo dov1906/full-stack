@@ -1,7 +1,15 @@
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from datetime import datetime
-from app import db
+from sqlalchemy import MetaData
+from flask_sqlalchemy import SQLAlchemy
+
+metadata = MetaData(naming_convention={
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+})
+db = SQLAlchemy(metadata=metadata)
+
+
 
 class Trader(db.Model, SerializerMixin):
     __tablename__ = "traders"
@@ -51,11 +59,7 @@ class Transaction(db.Model, SerializerMixin):
     trader = db.relationship("Trader", back_populates="transactions")
     portfolio = db.relationship("Portfolio", back_populates="transactions")
 
-    @validates("stock_code")
-    def validate_stock_code(self, key, value):
-        if not isinstance(value, str):
-            raise ValueError("Stock code must be a string.")
-        return value
+    serialize_rules = ('-trader.transactions', '-portfolio.transactions')
 
     @validates("quantity", "stock_price")
     def validate_positive(self, key, value):
