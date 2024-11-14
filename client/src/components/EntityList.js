@@ -3,14 +3,14 @@ import { Link } from "react-router-dom";
 
 
 function EntityList() {
-    const [entityType, setEntityType] = useState("trader"); // Default to traders
+    const [entityType, setEntityType] = useState("trader"); 
     const [entities, setEntities] = useState([]);
 
     useEffect(() => {
         fetch(`/${entityType}s`)
             .then((response) => response.json())
             .then((data) => {
-                console.log("Fetched data:", data); // Debug log
+                console.log("Fetched data:", data); 
                 setEntities(data);
             })
             .catch((error) => console.error("Error fetching data:", error));

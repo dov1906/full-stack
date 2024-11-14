@@ -5,26 +5,22 @@ from flask_migrate import Migrate
 
 from models import db, Trader, Portfolio, Transaction
 
-# Initialize the app and its configuration
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
-# Initialize extensions with the app
 db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
 CORS(app)
 
-# Import models after `db` initialization to avoid circular imports
 
 
 @app.route("/")
 def index():
     return make_response({"message": "Welcome to the Finance Company Management App"}, 200)
 
-# Traders Resource
 class AllTraders(Resource):
     def get(self):
         traders = [trader.to_dict(only=("id", "name", "photo")) for trader in Trader.query.all()]
@@ -62,12 +58,10 @@ class TraderByID(Resource):
 
         if trader:
             try:
-                # Update only the provided attributes
                 for attr in request.json:
                     setattr(trader, attr, request.json.get(attr))
                 db.session.commit()
                 
-                # Specify the fields you want to return in the response
                 response_body = trader.to_dict(only=("id", "name", "photo"))
                 return make_response(response_body, 200)
             except Exception as e:
@@ -100,7 +94,6 @@ api.add_resource(TraderByID, '/traders/<int:id>')
 
 class AllPortfolios(Resource):
     def get(self):
-        # Include "total_value" in the dictionary for each portfolio
         portfolios = [
             portfolio.to_dict(only=("id", "name", "total_value"))
             for portfolio in Portfolio.query.all()
@@ -123,11 +116,11 @@ class PortfolioByID(Resource):
         portfolio = db.session.get(Portfolio, id)
         if portfolio:
             body = portfolio.to_dict(only=("id", "name"))
-            # Adding associated traders
+          
             body["traders"] = [
                 trader.to_dict(only=("id", "name", "photo")) for trader in {transaction.trader for transaction in portfolio.transactions}
             ]
-            # Adding associated transactions and total value
+            
             body["transactions"] = [
                 transaction.to_dict(only=("id", "stock_code", "quantity", "stock_price", "date")) for transaction in portfolio.transactions
             ]

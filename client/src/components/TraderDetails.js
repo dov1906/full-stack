@@ -19,7 +19,7 @@ function TraderDetail() {
             .then((response) => {
                 if (response.ok) {
                     alert("Trader deleted successfully.");
-                    setTrader(null); // Optionally redirect or clear state
+                    setTrader(null); 
                 } else {
                     alert("Failed to delete trader.");
                 }

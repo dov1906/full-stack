@@ -2,12 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 
 function NewEntityForm() {
-    const [entityType, setEntityType] = useState("trader"); // Default to "trader"
+    const [entityType, setEntityType] = useState("trader"); 
     const [traders, setTraders] = useState([]);
     const [portfolios, setPortfolios] = useState([]);
 
     useEffect(() => {
-        // Fetch traders and portfolios for dropdowns
         fetch("/traders")
             .then((res) => res.json())
             .then((data) => setTraders(data));
@@ -23,7 +22,7 @@ function NewEntityForm() {
             stock_code: "",
             quantity: "",
             stock_price: "",
-            associatedTraders: [], // Updated to be an array for multiple traders
+            associatedTraders: [], 
             associatedPortfolio: "",
         },
         onSubmit: (values) => {
@@ -34,7 +33,7 @@ function NewEntityForm() {
                 stock_code: values.stock_code,
                 quantity: values.quantity,
                 stock_price: values.stock_price,
-                trader_ids: values.associatedTraders, // Updated to send an array of trader IDs
+                trader_ids: values.associatedTraders, 
                 portfolio_id: values.associatedPortfolio,
             };
 
@@ -55,7 +54,7 @@ function NewEntityForm() {
     });
 
     return (
-        <div>
+        <div className="form-container">
             <h2>Add a New {entityType.charAt(0).toUpperCase() + entityType.slice(1)}</h2>
             <label>
                 Select Entity Type:
@@ -147,8 +146,9 @@ function NewEntityForm() {
                                     Array.from(e.target.selectedOptions, option => option.value)
                                 )
                             }
-                            multiple // Allows multiple selection
+                            multiple 
                             value={formik.values.associatedTraders}
+                            className="multi-select"
                         >
                             {traders.map((trader) => (
                                 <option key={trader.id} value={trader.id}>
